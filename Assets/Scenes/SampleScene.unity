@@ -1245,6 +1245,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8855052669661678444, guid: 2dfbb63c9cdf7504faf4ff26b0581598, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 9036980633323257398, guid: 2dfbb63c9cdf7504faf4ff26b0581598, type: 3}
       propertyPath: m_Controller
       value: 
@@ -1516,6 +1520,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 847e5a2c100b57a46998d20dfd811e06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  VelMovimento: 5
+  "For\xE7aPulo": 5
+  Gravidade: -9.81
+  GroundLayer:
+    serializedVersion: 2
+    m_Bits: 1
+  groundCheckOffset: 0.1
+  groundCheckRadiusMultiplier: 0.9
 --- !u!143 &1777024267
 CharacterController:
   m_ObjectHideFlags: 0
