@@ -1,7 +1,4 @@
 using UnityEngine;
-// Remova os using desnecessários
-// using System.Numerics; // Não usado no Unity para vetores
-// using UnityEngine.InputSystem.Controls; // Não usado no Unity para Input.GetKeyDown/GetAxis
 
 public class MovimentoJogador : MonoBehaviour
 {
@@ -9,7 +6,6 @@ public class MovimentoJogador : MonoBehaviour
     private CharacterController controller;
     private Transform myCamera; // Referência à câmera principal
     private Animator animator;
-    // Removendo: Rigidbody rb; // Não é necessário com CharacterController para movimento
     private CapsuleCollider col; // Continua sendo usada para a verificação de chão mais detalhada
 
     // --- Variáveis de Movimento ---
@@ -17,6 +13,10 @@ public class MovimentoJogador : MonoBehaviour
     public float ForçaPulo = 8f; // Força do pulo
     public float Gravidade = -9.81f; // Valor padrão da gravidade. Ajuste se quiser
     private float velocidadeVertical; // Controla a velocidade Y para pulo e gravidade
+
+    // --- Controle de Movimento ---
+    private bool canMove = true; // Flag para controlar se o jogador pode se mover
+    private UnityEngine.Vector3 movimentoHorizontal; // Declarar aqui para ser acessível em ambos os blocos do if/else
 
     // --- Verificação de Chão ---
     public LayerMask GroundLayer; // Camada que representa o chão. Configure no Inspector.
@@ -55,50 +55,57 @@ public class MovimentoJogador : MonoBehaviour
         }
     }
 
-    // Update is called once per frame
     void Update()
     {
-        // --- Input de Movimento Horizontal ---
-        float horizontal = Input.GetAxis("Horizontal");
-        float vertical = Input.GetAxis("Vertical");
+        bool estaNoChao = controller.isGrounded; // Verificação de chão sempre é feita
 
-        // Calcula a direção do movimento baseada na orientação da câmera
-        // e transforma para o espaço global (ignora o Y para movimento horizontal)
-        UnityEngine.Vector3 movimentoHorizontal = new UnityEngine.Vector3(horizontal, 0, vertical);
-        movimentoHorizontal = myCamera.TransformDirection(movimentoHorizontal);
-        movimentoHorizontal.y = 0; // Garante que o movimento horizontal não afete a altura
-        movimentoHorizontal.Normalize(); // Normaliza para evitar velocidade diagonal maior
-        movimentoHorizontal *= VelMovimento; // Aplica a velocidade de movimento
-
-        // --- Rotação do Personagem ---
-        if (movimentoHorizontal.magnitude > 0.1f) // Usa magnitude para evitar rotação quando parado
+        // --- Lógica de Input e Movimento Horizontal (Condicional a 'canMove') ---
+        if (canMove)
         {
-            // Cria uma rotação para a direção do movimento
-            UnityEngine.Quaternion targetRotation = UnityEngine.Quaternion.LookRotation(movimentoHorizontal);
-            // Suaviza a rotação do personagem
-            transform.rotation = UnityEngine.Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10);
-        }
+            float horizontal = Input.GetAxis("Horizontal");
+            float vertical = Input.GetAxis("Vertical");
 
-        // --- Animação de Movimento ---
-        if (animator != null)
-        {
-            // Define o parâmetro de animação "MovFrente" (para andar/correr)
-            animator.SetBool("MovFrente", movimentoHorizontal.magnitude > 0.1f); // True se estiver se movendo
-        }
+            movimentoHorizontal = new UnityEngine.Vector3(horizontal, 0, vertical);
+            movimentoHorizontal = myCamera.TransformDirection(movimentoHorizontal);
+            movimentoHorizontal.y = 0; // Garante que o movimento horizontal não afete a altura
+            movimentoHorizontal.Normalize(); // Normaliza para evitar velocidade diagonal maior
+            movimentoHorizontal *= VelMovimento; // Aplica a velocidade de movimento
 
-        // --- Lógica de Pulo e Gravidade ---
-        bool estaNoChao = controller.isGrounded; // Usando a verificação de chão embutida do CharacterController
+            // --- Rotação do Personagem ---
+            if (movimentoHorizontal.magnitude > 0.1f) // Usa magnitude para evitar rotação quando parado
+            {
+                UnityEngine.Quaternion targetRotation = UnityEngine.Quaternion.LookRotation(movimentoHorizontal);
+                transform.rotation = UnityEngine.Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10);
+            }
 
-        // Se estiver no chão e pressionar espaço
-        if (estaNoChao && Input.GetKeyDown(KeyCode.Space))
-        {
-            velocidadeVertical = ForçaPulo; // Define a velocidade vertical para o pulo
+            // --- Animação de Movimento ---
             if (animator != null)
             {
-                animator.SetTrigger("Jump"); // Dispara o trigger de animação "Jump"
+                // Define o parâmetro de animação "MovFrente" (para andar/correr)
+                animator.SetBool("MovFrente", movimentoHorizontal.magnitude > 0.1f); // True se estiver se movendo
+            }
+
+            // --- Lógica de Pulo (Condicional a 'canMove' e 'estaNoChao') ---
+            if (estaNoChao && Input.GetKeyDown(KeyCode.Space))
+            {
+                velocidadeVertical = ForçaPulo; // Define a velocidade vertical para o pulo
+                if (animator != null)
+                {
+                    animator.SetTrigger("Jump"); // Dispara o trigger de animação "Jump"
+                }
             }
         }
+        else // Se canMove for false (player está pausado)
+        {
+            movimentoHorizontal = UnityEngine.Vector3.zero; // Zera o movimento horizontal
+            if (animator != null)
+            {
+                animator.SetBool("MovFrente", false); // Garante que a animação de movimento pare
+            }
+            // Não permitimos input de pulo aqui, mas a gravidade continua.
+        }
 
+        // --- Lógica de Gravidade (Sempre Aplicada, independentemente de 'canMove') ---
         // Aplica gravidade se não estiver no chão, ou se a velocidade vertical for negativa (caindo)
         // Se estiver no chão, zera a velocidade vertical para evitar acúmulo de gravidade
         if (estaNoChao && velocidadeVertical < 0)
@@ -111,21 +118,25 @@ public class MovimentoJogador : MonoBehaviour
         }
 
         // --- Aplica o Movimento Final ao CharacterController ---
-        // Combina o movimento horizontal e a velocidade vertical
+        // Combina o movimento horizontal (que pode ser zero se canMove for false) e a velocidade vertical
         UnityEngine.Vector3 movimentoFinal = movimentoHorizontal;
         movimentoFinal.y = velocidadeVertical; // Adiciona a velocidade vertical
 
         // Move o CharacterController
         controller.Move(movimentoFinal * Time.deltaTime);
-
-        // --- Atualiza o Parâmetro "IsGrounded" no Animator ---
-        if (animator != null)
-        {
-            animator.SetBool("IsGrounded", estaNoChao);
-            // Também pode adicionar um parâmetro para a velocidade vertical para animar queda/subida
-            // animator.SetFloat("VerticalSpeed", controller.velocity.y); // ou velocidadeVertical
-        }
+     
     }
+
+    public void SetMovementEnabled(bool enable)
+    {
+        canMove = enable;
+        // Opcional: Se quiser resetar a velocidade horizontal imediatamente ao pausar
+        // if (!enable)
+        // {
+        //     movimentoHorizontal = UnityEngine.Vector3.zero;
+        // }
+    }
+
 
     // --- Função de Verificação de Chão (Opcional, se controller.isGrounded não for suficiente) ---
     // Esta função é mais detalhada e usa Physics.CheckCapsule.
