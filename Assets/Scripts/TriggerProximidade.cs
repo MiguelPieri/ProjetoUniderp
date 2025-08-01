@@ -1,15 +1,11 @@
 using UnityEngine;
-// Removendo TMPro, pois não será mais usado
-// using TMPro; // Não precisamos mais desta namespace
-
 public class TriggerProximidade : MonoBehaviour
 {
     [Header("Configurações de Interação")]
     public string playerTag = "Player"; // Isso é a tag do player, para saber a proximidade
     public KeyCode interactKey = KeyCode.E; // A tecla que o jogador tem que apertar, no caso E
 
-    // --- REMOVIDO: FeedBack Visual (promptUIGameObject e promptTextComponent) ---
-    // Pois não queremos mais feedback de texto/UI
+    
 
     private bool playerIsNearby = false; // Flag para saber se o jogador está na area de interação
 
@@ -18,8 +14,7 @@ public class TriggerProximidade : MonoBehaviour
 
     void Start()
     {
-        // --- REMOVIDO: Lógica de ativação/desativação da UI no Start ---
-        // Não precisamos mais disso
+  
     }
 
     // Update is called once per frame
@@ -56,15 +51,13 @@ public class TriggerProximidade : MonoBehaviour
 
         if (other.CompareTag(playerTag))
         {
-            playerIsNearby = false; // O jogador não está mais perto
-            // --- REMOVIDO: Lógica para esconder o prompt de UI ---
-            // if (promptUIGameObject != null) { promptUIGameObject.SetActive(false); }
+            playerIsNearby = false; 
             Debug.Log("Jogador saiu da área do botão de interação."); // Apenas log para depuração
             Debug.Log("Jogador entrou na área do botão de interação! playerIsNearby = true");// verificação
         }
     }
 
-    // --- Método que executa a Ação do Botão ---
+    
     void PressButton()
     {
         Debug.Log("Botão Pressionado! Executando ação...");
@@ -81,7 +74,6 @@ public class TriggerProximidade : MonoBehaviour
 
     }
 
-    // Exemplo de função que pode ser chamada pelo UnityEvent (opcional)
     public void MensagemDeTeste()
     {
         Debug.Log("Ação de teste do botão realizada! (Sem UI de prompt)");

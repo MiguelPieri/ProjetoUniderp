@@ -68,9 +68,6 @@ public class MenuInterativoManager : MonoBehaviour
         }
     }
 
-    // --- Métodos Públicos para Abrir/Fechar a Tela (chamados por outros scripts) ---
-
-    // Método para ser chamado por um botão ou outro script (como seu BotãoScript) para ABRIR a tela
     public void OpenTelaInterativa()
     {
         if (!isTelaInterativaOpen) // Só abre se já não estiver aberta
